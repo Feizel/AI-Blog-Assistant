@@ -1,12 +1,12 @@
 from flask import Flask, render_template, request, jsonify
-import openai
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 
-load_dotenv()  # loads variables from .env
+load_dotenv()  # load environment variables from .env
 
 app = Flask(__name__)
-openai.api_key = os.getenv("OPENAI_API_KEY")  # Store your key securely
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))  # initialize OpenAI client
 
 @app.route('/')
 def index():
@@ -14,19 +14,25 @@ def index():
 
 @app.route('/generate', methods=['POST'])
 def generate():
-    topic = request.json.get('topic', '')
-    if not topic:
-        return jsonify({'error': 'Topic is required'}), 400
+    try:
+        topic = request.json.get('topic', '')
+        if not topic:
+            return jsonify({'error': 'Topic is required'}), 400
 
-    response = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=f"Write a detailed blog post about: {topic}",
-        temperature=0.7,
-        max_tokens=600,
-    )
-    content = response.choices[0].text.strip()
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": f"Write a detailed blog post about: {topic}"}
+            ],
+            temperature=0.7,
+            max_tokens=600,
+        )
+        content = response.choices[0].message.content.strip()
+        return jsonify({'content': content})
 
-    return jsonify({'content': content})
+    except Exception as e:
+        print(f"Error generating content: {e}")  # Log error for debugging
+        return jsonify({'error': 'Failed to generate content'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

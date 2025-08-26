@@ -1,32 +1,78 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AI Journal Assistant</title>
+    <title>AI Blog Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+      .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
+      .header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 30px; text-align: center; }
+      .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+      .header p { opacity: 0.9; font-size: 1.1rem; }
+      .form { padding: 40px; }
+      .input-group { margin-bottom: 20px; }
+      .input-group input { width: 100%; padding: 15px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
+      .input-group input:focus { outline: none; border-color: #4f46e5; }
+      .btn { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: transform 0.2s; width: 100%; }
+      .btn:hover { transform: translateY(-2px); }
+      .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+      .result { margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #4f46e5; white-space: pre-wrap; line-height: 1.6; }
+      .loading { text-align: center; color: #6b7280; font-style: italic; }
+    </style>
     <script>
       async function generateContent() {
         const topic = document.getElementById("topic").value;
         if (!topic) return alert("Please enter a topic.");
 
-        const response = await fetch("/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topic }),
-        });
+        const btn = document.getElementById("generateBtn");
+        const result = document.getElementById("result");
+        
+        btn.disabled = true;
+        btn.textContent = "Generating...";
+        result.innerHTML = '<div class="loading">🤖 AI is crafting your blog post...</div>';
 
-        const data = await response.json();
-        if (data.error) {
-          alert(data.error);
-        } else {
-          document.getElementById("result").textContent = data.content;
+        try {
+          const response = await fetch("/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ topic }),
+          });
+
+          const data = await response.json();
+          if (data.error) {
+            result.textContent = "Error: " + data.error;
+          } else {
+            result.textContent = data.content;
+          }
+        } catch (error) {
+          result.textContent = "Error: Failed to generate content. Please try again.";
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Generate Blog Post";
         }
       }
     </script>
   </head>
   <body>
-    <h1>AI Blog Assistant</h1>
-    <input id="topic" placeholder="Enter blog topic" style="width: 300px" />
-    <button onclick="generateContent()">Generate Blog Post</button>
-
-    <pre id="result" style="white-space: pre-wrap; margin-top: 20px"></pre>
+    <div class="container">
+      <div class="header">
+        <h1>🚀 AI Blog Assistant</h1>
+        <p>Transform your ideas into engaging blog content</p>
+      </div>
+      <div class="form">
+        <div class="input-group">
+          <input id="topic" placeholder="Enter your blog topic (e.g., 'The Future of AI')" />
+        </div>
+        <button id="generateBtn" class="btn" onclick="generateContent()">Generate Blog Post</button>
+        <div id="result" class="result" style="display: none;"></div>
+      </div>
+    </div>
+    <script>
+      document.getElementById('topic').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') generateContent();
+      });
+      document.getElementById('result').style.display = 'block';
+    </script>
   </body>
 </html>
