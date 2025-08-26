@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AI Journal Assistant</title>
+    <script>
+      async function generateContent() {
+        const topic = document.getElementById("topic").value;
+        if (!topic) return alert("Please enter a topic.");
+
+        const response = await fetch("/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic }),
+        });
+
+        const data = await response.json();
+        if (data.error) {
+          alert(data.error);
+        } else {
+          document.getElementById("result").textContent = data.content;
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <h1>AI Blog Assistant</h1>
+    <input id="topic" placeholder="Enter blog topic" style="width: 300px" />
+    <button onclick="generateContent()">Generate Blog Post</button>
+
+    <pre id="result" style="white-space: pre-wrap; margin-top: 20px"></pre>
+  </body>
+</html>
