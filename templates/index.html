@@ -5,51 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-      .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
-      .header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 30px; text-align: center; }
-      .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
-      .header p { opacity: 0.9; font-size: 1.1rem; }
-      .form { padding: 40px; }
-      .input-group { margin-bottom: 20px; }
-      .input-group input { width: 100%; padding: 15px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
-      .input-group input:focus { outline: none; border-color: #4f46e5; }
-      .btn { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: transform 0.2s; width: 100%; }
-      .btn:hover { transform: translateY(-2px); }
-      .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-      .result { margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #4f46e5; white-space: pre-wrap; line-height: 1.6; }
-      .loading { text-align: center; color: #6b7280; font-style: italic; }
+      body { font-family: 'Georgia', 'Times New Roman', serif; background: #1a1a1a; color: #e0e0e0; min-height: 100vh; padding: 40px 20px; }
+      .container { max-width: 900px; margin: 0 auto; background: #2d2d2d; border: 1px solid #404040; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+      .header { background: #1f2937; color: #f9fafb; padding: 50px 40px; border-bottom: 3px solid #059669; }
+      .header h1 { font-size: 2.8rem; margin-bottom: 15px; font-weight: 300; letter-spacing: -1px; }
+      .header p { color: #d1d5db; font-size: 1.2rem; font-style: italic; }
+      .tabs { display: flex; background: #374151; flex-wrap: wrap; }
+      .tab { flex: 1; min-width: 120px; padding: 15px 10px; text-align: center; cursor: pointer; background: #374151; color: #9ca3af; border: none; font-family: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; }
+      .tab.active { background: #059669; color: white; }
+      .tab:hover { background: #4b5563; }
+      .tab.active:hover { background: #047857; }
+      .form { padding: 50px 40px; }
+      .input-group { margin-bottom: 30px; }
+      .input-group label { display: block; margin-bottom: 8px; color: #9ca3af; font-weight: 500; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
+      .input-group input, .input-group textarea { width: 100%; padding: 18px; background: #374151; border: 2px solid #4b5563; color: #f9fafb; font-size: 16px; transition: all 0.3s ease; font-family: inherit; }
+      .input-group textarea { min-height: 120px; resize: vertical; }
+      .input-group input:focus, .input-group textarea:focus { outline: none; border-color: #059669; background: #1f2937; }
+      .input-group input::placeholder, .input-group textarea::placeholder { color: #6b7280; }
+      .btn { background: #059669; color: white; border: none; padding: 18px 40px; font-size: 16px; cursor: pointer; transition: all 0.3s ease; width: 100%; font-family: inherit; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+      .btn:hover { background: #047857; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; background: #6b7280; }
+      .result { margin-top: 40px; padding: 30px; background: #1f2937; border-left: 4px solid #059669; white-space: pre-wrap; line-height: 1.8; font-size: 15px; }
+      .loading { text-align: center; color: #9ca3af; font-style: italic; font-size: 16px; }
+      .divider { height: 1px; background: #404040; margin: 30px 0; }
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
     </style>
     <script>
-      async function generateContent() {
-        const topic = document.getElementById("topic").value;
-        if (!topic) return alert("Please enter a topic.");
+      let currentTab = 'topics';
 
-        const btn = document.getElementById("generateBtn");
-        const result = document.getElementById("result");
+      function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+        document.getElementById(tab).classList.add('active');
+        
+        currentTab = tab;
+        document.getElementById('result').innerHTML = '';
+      }
+
+      async function processRequest() {
+        let endpoint, data, buttonText;
+        
+        if (currentTab === 'topics') {
+          const interests = document.getElementById('interests').value;
+          if (!interests) return alert('Please enter your interests.');
+          endpoint = '/suggest-topics';
+          data = { interests };
+          buttonText = 'Get Topic Ideas';
+        } else if (currentTab === 'proofread') {
+          const text = document.getElementById('proofread-text').value;
+          if (!text) return alert('Please enter text to proofread.');
+          endpoint = '/proofread';
+          data = { text };
+          buttonText = 'Proofread Text';
+        } else if (currentTab === 'polish') {
+          const text = document.getElementById('polish-text').value;
+          if (!text) return alert('Please enter your draft to polish.');
+          endpoint = '/polish-draft';
+          data = { text };
+          buttonText = 'Polish Draft';
+        } else if (currentTab === 'tone') {
+          const text = document.getElementById('tone-text').value;
+          if (!text) return alert('Please enter text to analyze.');
+          endpoint = '/analyze-tone';
+          data = { text };
+          buttonText = 'Analyze Tone';
+        } else if (currentTab === 'headlines') {
+          const text = document.getElementById('headlines-text').value;
+          if (!text) return alert('Please enter your content.');
+          endpoint = '/suggest-headlines';
+          data = { text };
+          buttonText = 'Suggest Headlines';
+        } else if (currentTab === 'readability') {
+          const text = document.getElementById('readability-text').value;
+          if (!text) return alert('Please enter text to check.');
+          endpoint = '/check-readability';
+          data = { text };
+          buttonText = 'Check Readability';
+        }
+
+        const btn = document.getElementById('actionBtn');
+        const result = document.getElementById('result');
         
         btn.disabled = true;
-        btn.textContent = "Generating...";
-        result.innerHTML = '<div class="loading">🤖 AI is crafting your blog post...</div>';
+        btn.textContent = 'Processing...';
+        result.innerHTML = '<div class="loading">Analyzing your human-written content...</div>';
 
         try {
-          const response = await fetch("/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ topic }),
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
           });
 
-          const data = await response.json();
-          if (data.error) {
-            result.textContent = "Error: " + data.error;
+          const responseData = await response.json();
+          if (responseData.error) {
+            result.textContent = 'Error: ' + responseData.error;
           } else {
-            result.textContent = data.content;
+            result.textContent = responseData.content;
           }
         } catch (error) {
-          result.textContent = "Error: Failed to generate content. Please try again.";
+          result.textContent = 'Error: Failed to process request. Please try again.';
         } finally {
           btn.disabled = false;
-          btn.textContent = "Generate Blog Post";
+          btn.textContent = buttonText;
         }
       }
     </script>
@@ -57,22 +118,80 @@
   <body>
     <div class="container">
       <div class="header">
-        <h1>🚀 AI Blog Assistant</h1>
-        <p>Transform your ideas into engaging blog content</p>
+        <h1>AI Blog Assistant</h1>
+        <p>Your personal writing companion - improving human creativity, not replacing it</p>
       </div>
+      
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('topics')">Topic Ideas</button>
+        <button class="tab" onclick="switchTab('proofread')">Proofread</button>
+        <button class="tab" onclick="switchTab('polish')">Polish Draft</button>
+        <button class="tab" onclick="switchTab('tone')">Tone Analysis</button>
+        <button class="tab" onclick="switchTab('headlines')">Headlines</button>
+        <button class="tab" onclick="switchTab('readability')">Readability</button>
+      </div>
+
       <div class="form">
-        <div class="input-group">
-          <input id="topic" placeholder="Enter your blog topic (e.g., 'The Future of AI')" />
+        <div id="topics" class="tab-content active">
+          <div class="input-group">
+            <label for="interests">Your Interests</label>
+            <input id="interests" placeholder="e.g., technology, psychology, sustainability, cooking" />
+          </div>
+          <div class="divider"></div>
+          <button id="actionBtn" class="btn" onclick="processRequest()">Get Topic Ideas</button>
         </div>
-        <button id="generateBtn" class="btn" onclick="generateContent()">Generate Blog Post</button>
-        <div id="result" class="result" style="display: none;"></div>
+
+        <div id="proofread" class="tab-content">
+          <div class="input-group">
+            <label for="proofread-text">Text to Proofread</label>
+            <textarea id="proofread-text" placeholder="Paste your blog content here for proofreading..."></textarea>
+          </div>
+          <div class="divider"></div>
+          <button id="actionBtn" class="btn" onclick="processRequest()">Proofread Text</button>
+        </div>
+
+        <div id="polish" class="tab-content">
+          <div class="input-group">
+            <label for="polish-text">Your Draft</label>
+            <textarea id="polish-text" placeholder="Paste your human-written draft here for polishing suggestions..."></textarea>
+          </div>
+          <div class="divider"></div>
+          <button id="actionBtn" class="btn" onclick="processRequest()">Polish Draft</button>
+        </div>
+
+        <div id="tone" class="tab-content">
+          <div class="input-group">
+            <label for="tone-text">Your Content</label>
+            <textarea id="tone-text" placeholder="Paste your writing here to analyze tone and style..."></textarea>
+          </div>
+          <div class="divider"></div>
+          <button id="actionBtn" class="btn" onclick="processRequest()">Analyze Tone</button>
+        </div>
+
+        <div id="headlines" class="tab-content">
+          <div class="input-group">
+            <label for="headlines-text">Your Blog Content</label>
+            <textarea id="headlines-text" placeholder="Paste your blog content here to get headline suggestions..."></textarea>
+          </div>
+          <div class="divider"></div>
+          <button id="actionBtn" class="btn" onclick="processRequest()">Suggest Headlines</button>
+        </div>
+
+        <div id="readability" class="tab-content">
+          <div class="input-group">
+            <label for="readability-text">Your Writing</label>
+            <textarea id="readability-text" placeholder="Paste your content here to check readability and accessibility..."></textarea>
+          </div>
+          <div class="divider"></div>
+          <button id="actionBtn" class="btn" onclick="processRequest()">Check Readability</button>
+        </div>
+
+        <div id="result" class="result"></div>
+        
+        <div style="margin-top: 40px; padding: 20px; background: #374151; border-radius: 8px; text-align: center; font-size: 14px; color: #9ca3af;">
+          <strong>Human-Authored Content:</strong> This assistant enhances your original writing - all blog content remains 100% human-created by you.
+        </div>
       </div>
     </div>
-    <script>
-      document.getElementById('topic').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') generateContent();
-      });
-      document.getElementById('result').style.display = 'block';
-    </script>
   </body>
 </html>
